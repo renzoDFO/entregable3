@@ -1,0 +1,64 @@
+#!/usr/bin/sh
+
+PACKAGES_HOME="~/compose"
+mkdir $PACKAGES_HOME
+
+sudo yum update
+sudo yum install -y docker nettools
+sudo usermod -a -G docker ec2-user
+sudo service docker start
+sudo chkconfig docker on
+
+# Install docker-compose
+sudo curl -L \
+https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) \
+-o /usr/local/bin/docker-compose && \
+sudo chmod +x /usr/local/bin/docker-compose
+
+# Verify install
+docker --version
+docker-compose version
+
+cat <<EOF >$PACKAGES_HOME/nginx.conf
+http {
+  index    index.html
+  // Upstreams
+  upstream backend  {
+    least_conn;
+    # shellcheck disable=SC2154
+    server ${backend_ip}:8080;
+  }
+  server {
+    listen 80;
+    server_name web.com;
+    index index.html;
+  }
+  server {
+    location /api {
+      proxy_set_header Host $host;
+      proxy_pass  http://backend;
+    }
+  }
+}
+EOF
+
+# HTML servicios
+cat <<EOF >$PACKAGES_HOME/index.html
+<html><body>HOLA MUNDO</body></html>
+EOF
+
+# Docker Compose
+cat <<EOF >$PACKAGES_HOME/docker-compose.yml
+version: '3'
+services:
+  nginx:
+    image: nginx:1.16.0-alpine
+    volumes:
+      - $PACKAGES_HOME/nginx.conf:/etc/nginx/nginx.conf:ro
+      - $PACKAGES_HOME/index.html:/usr/share/nginx/html/index.html
+    ports:
+      - "80:80"
+EOF
+
+# Run
+docker-compose up -d

@@ -1,0 +1,8 @@
+PUBLIC_IPS:
+  backend: ${BACKEND_PUBLIC_IP}
+  frontend: ${FRONTEND_PUBLIC_IP}
+  database: ${DATABASE_PUBLIC_IP}
+PRIVATE_IP:
+  backend: ${BACKEND_PRIVATE_IP}
+  frontend: ${FRONTEND_PRIVATE_IP}
+  database: ${DATABASE_PRIVATE_IP}

@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+SSH="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+function apply() {
+  terraform init -reconfigure
+  terraform plan -out=plan.js
+  terraform apply -auto-approve plan.js
+}
+function destroy() {
+  terraform destroy -auto-approve
+}
+function connect() {
+  $SSH root@$(getHostname)
+}
+
+git pull
+case "$1" in
+app)
+  apply
+  exit 0
+  ;;
+des)
+  destroy
+  ;;
+up)
+  apply
+  up
+  ;;
+down)
+  down
+  ;;
+connect)
+  connect
+  ;;
+*)
+  echo "Usage: $0 {apply|destroy}"
+  ;;
+esac
